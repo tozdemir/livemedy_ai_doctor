@@ -1,0 +1,30 @@
+# .NET Core files
+bin/
+obj/
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Logs
+*.log
+
+# Visual Studio Code files
+.vscode/
+
+# Rider files
+.idea/
+
+# Publish output
+publish/
+
+# appsettings
+appsettings.json
+
+# Extra Files
+*.zip
+*.png
+*.pdf
