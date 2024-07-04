@@ -21,9 +21,6 @@ obj/
 # Publish output
 publish/
 
-# appsettings
-appsettings.json
-
 # Extra Files
 *.zip
 *.png
