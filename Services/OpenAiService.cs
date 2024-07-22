@@ -60,6 +60,39 @@ namespace LiveMedyAIProject.Services
 
         }
 
+        public async Task<VeterinaryResponse> GetPetDiagnosis(PetDetail petDetail)
+        {
+            var prompt = GeneratePetPrompt(petDetail);
+
+            var payload = new
+            {
+                model = "gpt-4o",
+                messages = new[]
+                {
+                    new { role = "system", content = "You are a helpful veterinary assistant." },
+                    new { role = "user", content = prompt }
+                },
+                max_tokens = 1000
+            };
+
+            var jsonContent = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _configuration["OpenAi:ApiKey"]);
+
+            var response = await _httpClient.PostAsync(_configuration["OpenAi:ChatApiUrl"], jsonContent);
+
+            var responseString = await response.Content.ReadAsStringAsync();
+            _logger.LogInformation($"OpenAI API response: {responseString}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new HttpRequestException($"OpenAI API request failed: {response.StatusCode}, {responseString}");
+            }
+
+            var parsedResponse = ParsePetResponse(responseString);
+            return parsedResponse;
+        }
+
         private string GeneratePrompt(PatientData patientData, string additionalInfo = "")
         {
             var prompt = new StringBuilder();
@@ -183,7 +216,52 @@ namespace LiveMedyAIProject.Services
             };
         }
 
+        private string GeneratePetPrompt(PetDetail petDetail)
+        {
+            var prompt = new StringBuilder();
+            prompt.AppendLine("Pet Details:");
+            prompt.AppendLine($"Species: {petDetail.Species}");
+            prompt.AppendLine($"Type: {petDetail.Type}");
+            prompt.AppendLine($"Weight: {petDetail.Weight} {petDetail.WeightUnit}");
+            prompt.AppendLine($"Age: {petDetail.AgeYears} years and {petDetail.AgeMonths} months");
+            prompt.AppendLine($"Complaint: {petDetail.Complaint}");
+
+            prompt.AppendLine("Based on the above information, please provide the following:");
+            prompt.AppendLine("1. Most possible diagnosis for the complaint. If there are multiple possible diagnosis, limit with 3.");
+            prompt.AppendLine("2. Treatment plan for each diagnosis.");
+            prompt.AppendLine("3. Recommended medicines for each treatment if required.");
+            prompt.AppendLine("Return response in Turkish.");
+            prompt.AppendLine("Return response in JSON format with the following structure:");
+            prompt.AppendLine("{");
+            prompt.AppendLine("  \"Diagnosis 1\": { \"Diagnosis\": \"Diagnosis description\", \"Treatment\": [\"Treatment\"], \"Medicine\": [\"Medicine 1\", \"Medicine 2\"] },");
+            prompt.AppendLine("}");
 
 
+            return prompt.ToString();
+        }
+
+        private VeterinaryResponse ParsePetResponse(string responseString)
+        {
+            dynamic responseJson = JsonConvert.DeserializeObject(responseString);
+            var responseContent = (string)responseJson.choices[0].message.content;
+
+            _logger.LogInformation($"Response content: {responseContent}");
+
+            if (responseContent.StartsWith("```json"))
+            {
+                responseContent = responseContent.Substring(7);
+            }
+            if (responseContent.EndsWith("```"))
+            {
+                responseContent = responseContent.Substring(0, responseContent.Length - 3);
+            }
+
+            _logger.LogInformation($"Cleaned response content: {responseContent}");
+
+            return new VeterinaryResponse
+            {
+                Diagnoses = JsonConvert.DeserializeObject<Dictionary<string, DiagnosisDetail>>(responseContent)
+            };
+        }
     }
 }

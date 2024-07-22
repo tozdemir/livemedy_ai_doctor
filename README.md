@@ -35,7 +35,13 @@ This project is a .NET application that uses the OpenAI API to suggest medical s
 
 ## API Endpoints
 
-### `POST /specialist/suggest-specialist`
+## Human Health Endpoint Details
+1. Base URL: http://localhost:5000
+2. Endpoint: api/specialist/suggest-specialist
+3. Method: POST
+4. Content-Type: application/json
+
+### `POST api/specialist/suggest-specialist`
 
 **Request Body:**
 
@@ -214,6 +220,24 @@ This project is a .NET application that uses the OpenAI API to suggest medical s
   ]
 }
 
+## Pet Health Endpoint Details
+1. Base URL: http://localhost:5000
+2. Endpoint: api/pet/diagnose-pet
+3. Method: POST
+4. Content-Type: application/json
+
+### `POST api/pet/diagnose-pet`
+
+**Request Body:**
+{
+  "Species": "Kedi",
+  "Type": "Sarman Sokak",
+  "Weight": 1,
+  "WeightUnit": "kg",
+  "AgeYears": 0,
+  "AgeMonths": 5,
+  "Complaint": "Kollarda ve bacaklarda tüylerin dökülmesi, kaşıntı, halsizlik"
+}
 
 ## License
 
